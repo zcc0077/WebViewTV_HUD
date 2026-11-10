@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.recyclerview.widget.RecyclerView android:id="@id/rvSettings" android:layout_width="fill_parent" android:layout_height="@dimen/settings_list_height" app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+    <LinearLayout android:gravity="center" android:orientation="horizontal" android:paddingLeft="@dimen/spacing_medium" android:paddingTop="@dimen/spacing_tiny" android:paddingRight="@dimen/spacing_medium" android:paddingBottom="@dimen/spacing_tiny" android:layout_width="fill_parent" android:layout_height="wrap_content" android:paddingHorizontal="@dimen/spacing_medium" android:paddingVertical="@dimen/spacing_tiny">
+        <ImageView android:id="@id/serverInfoImage" android:layout_width="@dimen/qr_code_size" android:layout_height="@dimen/qr_code_size" android:importantForAccessibility="no" />
+        <TextView android:textSize="@dimen/text_size_tiny" android:id="@id/serverInfoText" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginStart="@dimen/spacing_medium" />
+    </LinearLayout>
+</LinearLayout>

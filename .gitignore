@@ -1,0 +1,10 @@
+out/
+__pycache__/
+*.pyc
+.DS_Store
+*.apk
+*.idsig
+*.keystore
+*.jks
+*password*
+local.properties

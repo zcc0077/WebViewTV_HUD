@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.vasthread.webviewtv.view.FocusableButton android:textSize="@dimen/text_size_large" android:textColor="@color/color_text" android:gravity="center" android:layout_gravity="center" android:id="@id/btnSource1" android:background="@drawable/bg_item" android:layout_width="@dimen/btn_width_normal" android:layout_height="@dimen/item_height_normal" android:checked="true" android:text="1"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

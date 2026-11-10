@@ -1,0 +1,19 @@
+version: 2.12.1
+apkFileName: 【推荐】电视直播WebViewTV_3.0.1.apk
+usesFramework:
+  ids:
+  - 1
+sdkInfo:
+  minSdkVersion: 21
+  targetSdkVersion: 37
+packageInfo:
+  forcedPackageId: 127
+versionInfo:
+  versionCode: 44
+  versionName: 3.0.1
+doNotCompress:
+- arsc
+- ogg
+- png
+- assets/dexopt/baseline.prof
+- assets/dexopt/baseline.profm

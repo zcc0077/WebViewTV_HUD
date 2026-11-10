@@ -1,0 +1,1 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.vasthread.huduitest"><uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28"/><application android:label="HUD UI Test"/><instrumentation android:name="com.vasthread.huduitest.EditorProbe" android:targetPackage="com.vasthread.webviewtv.v2.hud"/></manifest>

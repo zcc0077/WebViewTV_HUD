@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:background="@drawable/bg_item" android:paddingLeft="@dimen/spacing_medium" android:paddingRight="@dimen/spacing_medium" android:focusable="true" android:layout_width="fill_parent" android:layout_height="@dimen/item_height_small"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/text_size_medium" android:gravity="center_vertical" android:id="@id/tvTitle" android:layout_width="0.0dip" android:layout_height="fill_parent" android:layout_weight="1.0" />
+    <LinearLayout android:orientation="horizontal" android:id="@id/llItem" android:layout_width="@dimen/side_panel_width" android:layout_height="fill_parent">
+        <Button android:textSize="@dimen/text_size_small" android:textColor="#ffbbbbbb" android:gravity="center" android:id="@id/btnLeft" android:background="@drawable/bg_item" android:layout_width="@dimen/btn_width_small" android:layout_height="fill_parent" android:text="◀" />
+        <com.vasthread.webviewtv.view.MarqueeTextView android:textSize="@dimen/text_size_small" android:textColor="#ffbbbbbb" android:gravity="center" android:id="@id/tvItem" android:layout_width="0.0dip" android:layout_height="fill_parent" android:layout_weight="1.0" />
+        <Button android:textSize="@dimen/text_size_small" android:textColor="#ffbbbbbb" android:gravity="center" android:id="@id/btnRight" android:background="@drawable/bg_item" android:layout_width="@dimen/btn_width_small" android:layout_height="fill_parent" android:text="▶" />
+    </LinearLayout>
+</LinearLayout>
