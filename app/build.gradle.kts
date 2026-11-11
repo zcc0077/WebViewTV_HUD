@@ -11,8 +11,8 @@ android {
         applicationId = "com.vasthread.webviewtv.v2.hud"
         minSdk = 21
         targetSdk = 34
-        versionCode = 46
-        versionName = "1.6-HUD.2"
+        versionCode = 47
+        versionName = "1.6-HUD.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -29,6 +29,7 @@ android {
             keyPassword = providers.environmentVariable("WEBVIEWTV_HUD_KEY_PASSWORD").orNull ?: storePassword
         }
         buildTypes.getByName("debug").signingConfig = signingConfigs.getByName("external")
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("external")
     }
 
     buildTypes {
@@ -36,7 +37,8 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

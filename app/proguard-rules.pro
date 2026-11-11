@@ -1,24 +1,14 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
+# X5 loads its SDK entry points and callbacks reflectively from an external kernel.
+-keep class com.tencent.smtt.** { *; }
 -dontwarn com.tencent.bugly.**
--keep public class com.tencent.bugly.**{*;}
+# X5 references this Android platform class, which is absent from the public SDK stubs.
+-dontwarn dalvik.system.VMStack
+
+# Page scripts call these names through addJavascriptInterface, outside R8's call graph.
+-keepclassmembers,allowoptimization class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Gson 2.11 supplies its own consumer rules; playlist JSON fields use SerializedName.
+-keepattributes Signature,RuntimeVisibleAnnotations,AnnotationDefault
+-keepattributes SourceFile,LineNumberTable

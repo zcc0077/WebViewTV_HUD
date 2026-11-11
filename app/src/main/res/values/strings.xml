@@ -38,4 +38,9 @@
     <string name="custom_playlist">自定义播放列表</string>
     <string name="cancel">取消</string>
     <string name="background_playback_mode">后台播放方式</string>
+    <string name="declaration_title">二创声明与使用须知</string>
+    <string name="declaration_message">本应用为 WebViewTV 的 HUD 二创版本，基于原作者 hxh19950701 的公开源码修改，原项目及相关权利归原作者和相应权利人所有。\n原项目：https://github.com/hxh19950701/WebViewTvLive\n\n禁止商业用途，禁止二次倒卖。\n\n目前仅在领克 09 上测试通过，其他车型及系统的兼容性未经验证。\n\n请自行判断使用风险并遵守法律法规，勿在驾驶过程中操作或观看视频。因安装、使用本应用产生的任何问题、损失或后果，均由使用者自行承担，二创作者不承担任何责任。\n\n点击“我已知晓”表示您已阅读并知晓以上声明；如不接受，请退出应用。\n\nby Cheter·Chao</string>
+    <string name="declaration_acknowledge">我已知晓</string>
+    <string name="declaration_exit">退出应用</string>
+    <string name="declaration_save_failed">无法保存确认记录，请重试或退出应用</string>
 </resources>

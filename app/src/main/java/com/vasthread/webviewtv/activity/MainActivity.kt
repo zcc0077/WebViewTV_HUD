@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     private var lastChannel: Channel? = null
     private var smallWindowRequested = false
+    private var declarationDialog: AlertDialog? = null
 
     private var uiMode = UiMode.STANDARD
         set(value) {
@@ -82,6 +83,53 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (getSharedPreferences("first_launch_notice", MODE_PRIVATE)
+                .getBoolean("acknowledged_v1", false)) {
+            initializePlayback()
+        } else {
+            showDeclaration()
+        }
+    }
+
+    private fun showDeclaration() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.declaration_title)
+            .setMessage(R.string.declaration_message)
+            .setCancelable(false)
+            .setNegativeButton(R.string.declaration_exit) { _, _ -> finishAndRemoveTask() }
+            .setPositiveButton(R.string.declaration_acknowledge, null)
+            .create()
+        declarationDialog = dialog
+        dialog.setCanceledOnTouchOutside(false)
+        dialog.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                if (event.action == KeyEvent.ACTION_UP) finishAndRemoveTask()
+                true
+            } else false
+        }
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus()
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val saved = getSharedPreferences("first_launch_notice", MODE_PRIVATE).edit()
+                    .putBoolean("acknowledged_v1", true).commit()
+                if (saved) {
+                    dialog.dismiss()
+                    declarationDialog = null
+                    initializePlayback()
+                    resumePlayback()
+                } else {
+                    // commit() updates memory even when its disk write fails.
+                    // Keep recreation in this process behind the acknowledgement gate.
+                    getSharedPreferences("first_launch_notice", MODE_PRIVATE).edit()
+                        .putBoolean("acknowledged_v1", false).apply()
+                    Toast.makeText(this, R.string.declaration_save_failed, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun initializePlayback() {
         setupUi()
         setupListener()
         initChannels()
@@ -170,6 +218,10 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     override fun onResume() {
         super.onResume()
+        if (::playerView.isInitialized) resumePlayback()
+    }
+
+    private fun resumePlayback() {
         HudOverlay.restore(this)
         if (lastChannel != null && playerView.channel == null) {
             playlistView.currentChannel = lastChannel
@@ -180,6 +232,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     override fun onPause() {
         super.onPause()
+        if (!::playerView.isInitialized) return
         uiMode = UiMode.STANDARD
         lastChannel = playerView.channel ?: lastChannel
         if (!PlaybackPolicy.keepPlaying(HudOverlay.active() || smallWindowRequested || inSmallWindow())) playerView.channel = null
@@ -187,6 +240,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        if (!::playerView.isInitialized) return
         if (PlaybackPolicy.enterHud(true, SettingsManager.isBackgroundPlaybackEnabled(),
                 playerView.channel != null, isFinishing, isChangingConfigurations)) {
             if (SettingsManager.usesHud()) {
@@ -217,12 +271,14 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     override fun onPictureInPictureModeChanged(inPictureInPictureMode: Boolean, config: Configuration) {
         super.onPictureInPictureModeChanged(inPictureInPictureMode, config)
+        if (!::uiLayout.isInitialized) return
         smallWindowRequested = inPictureInPictureMode
         uiLayout.visibility = if (inPictureInPictureMode) View.GONE else View.VISIBLE
     }
 
     override fun onStop() {
         super.onStop()
+        if (!::playerView.isInitialized) return
         if (!HudOverlay.active() && !inSmallWindow()) {
             lastChannel = playerView.channel ?: lastChannel
             playerView.channel = null
@@ -231,10 +287,14 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
     }
 
     override fun onDestroy() {
-        HudOverlay.release(this)
-        playerView.release()
-        PlaylistManager.onPlaylistChange = null
-        PlaylistManager.onUpdatePlaylistJobStateChange = null
+        declarationDialog?.dismiss()
+        declarationDialog = null
+        if (::playerView.isInitialized) {
+            HudOverlay.release(this)
+            playerView.release()
+            PlaylistManager.onPlaylistChange = null
+            PlaylistManager.onUpdatePlaylistJobStateChange = null
+        }
         super.onDestroy()
     }
 
@@ -270,12 +330,16 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        if (!::playerView.isInitialized) {
+            finishAndRemoveTask()
+            return
+        }
         uiMode = if (uiMode == UiMode.STANDARD) UiMode.EXIT_CONFIRM else UiMode.STANDARD
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
+        if (hasFocus && ::playerView.isInitialized) {
             playerView.requestFocus()
         }
     }
@@ -301,6 +365,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (!::playerView.isInitialized) return super.dispatchKeyEvent(event)
         onKeyEvent(event)
         val keyCode = event.keyCode
         if (!OPERATION_KEYS.contains(keyCode)) {
@@ -342,6 +407,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
     }
 
     private fun repostBackToStandardModeAction() {
+        if (!::playerView.isInitialized) return
         playerView.removeCallbacks(backToStandardModeAction)
         playerView.postDelayed(backToStandardModeAction, OPERATION_TIMEOUT)
     }

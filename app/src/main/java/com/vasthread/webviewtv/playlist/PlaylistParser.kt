@@ -8,9 +8,9 @@ import com.vasthread.hudpatch.PlaylistPolicy
 /** Shared validation for downloaded lists, cached lists and the built-in list. */
 object PlaylistParser {
     private data class Entry(
-        val name: String? = null,
+        @SerializedName("name") val name: String? = null,
         @SerializedName("group") val group: String? = null,
-        val urls: List<String?>? = null
+        @SerializedName("urls") val urls: List<String?>? = null
     )
     private val gson = Gson()
     private val type = object : TypeToken<List<Entry?>>() {}.type

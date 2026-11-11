@@ -31,6 +31,10 @@ public class HudSourceTest {
   }
 
   private MainActivity launch() {
+    // Playback tests run after the separate first-launch acknowledgement flow.
+    assertTrue(instrumentation().getTargetContext()
+        .getSharedPreferences("first_launch_notice", 0).edit()
+        .putBoolean("acknowledged_v1", true).commit());
     Intent i = new Intent(instrumentation().getTargetContext(), MainActivity.class);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     return (MainActivity) instrumentation().startActivitySync(i);
