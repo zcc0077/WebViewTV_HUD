@@ -1,55 +1,57 @@
 # WebViewTV HUD
 
-A source-based derivative of [hxh19950701/WebViewTvLive](https://github.com/hxh19950701/WebViewTvLive), with configurable background playback on an Android vehicle HUD.
+基于 [hxh19950701/WebViewTvLive](https://github.com/hxh19950701/WebViewTvLive) 公开源码开发的二创版本，支持车机 HUD 显示和可选的后台播放方式。
 
-This project builds directly from Kotlin/Java and Android resources with Gradle. It does not require an original APK, smali, a decompiler, a private signing key, or a vehicle connection.
+本项目使用 Gradle 直接编译 Kotlin、Java 和 Android 资源，无需原始 APK、smali、反编译工具、私有签名密钥或车机连接。
 
-## Source baseline
+## 源码基础
 
-The upstream author states that **1.6 is the final publicly available source version**. The upstream `3.0.1` release tag still contains that older source project; it is not the source of the closed-source 3.0.1 APK. This derivative intentionally uses the public source baseline and does not claim to reconstruct every later proprietary feature.
+上游作者声明，**1.6 是最后公开的源码版本**。上游 `3.0.1` 发布标签中的工程仍是这份旧版源码，并不是闭源 3.0.1 APK 的对应源码。本项目以公开源码为基础，不包含后续闭源版本的全部功能。
 
-Upstream Git history is retained as a merge parent, based on `f84d817baf1b3f9407cbb525db9534842637090e`. The existing repository history is also retained. The earlier APK-based experiment remains available in commit `e72b00c`; the current default tree replaces it with the source-built application.
+本仓库通过合并保留上游 Git 历史，基于提交 `f84d817baf1b3f9407cbb525db9534842637090e`，同时保留当前仓库的既有历史。此前基于 APK 修改的实验工程保留在提交 `e72b00c` 中；当前默认工程已替换为可直接编译的源码版本。
 
-Current app version: `1.6-HUD.1` / code `45`. Package: `com.vasthread.webviewtv.v2.hud`. Launcher label: **WebView 电视 HUD**.
+当前应用版本：`1.6-HUD.1`，版本代码为 `45`。独立包名：`com.vasthread.webviewtv.v2.hud`。安装后名称：**WebView 电视 HUD**。
 
-## Playback and settings
+## 播放与设置
 
-- **Automatic fullscreen playback is enabled on first installation.** Explicit user changes are persisted.
-- **Background playback** has an enable switch and a **small window / HUD** mode selector. The default mode is HUD.
-- **Small window:** leaving the app requests Android picture-in-picture on the main display. It does not move the player to display 2 or request overlay permission. Android 8+ and device PiP support are required.
-- **HUD:** only this selected mode moves the actual player to display 2 when leaving the app. Returning to the app restores it to the primary screen. Missing display/permission does not fall back to the instrument area or a primary-display overlay.
-- HUD permission detection opens Android's overlay authorization screen when needed. A transparent, immediately removed 1x1 probe handles vehicle ROMs whose permission queries disagree with WindowManager. No system permission is granted by the app.
-- **HUD 设置** in the main settings page opens a preview with dragging, aspect-locked resizing, a size slider, save, cancel and reset. Values persist in `hud_window` preferences.
-- Default HUD canvas: **728x190 physical pixels**, starting at **screen `(0,720)`**. The first 720 screen rows belong to the instrument cluster and are excluded. Default 16:9 playback is **338x190**, at `[0,720][338,910]`.
-- HUD window and fullscreen content prefer the same actual video ratio, preserving the full configured height for 4:3 as well as 16:9 material. Returning to the main screen restores the selected display ratio.
-- The public source's disabled app module and empty playlist have been restored. A 30-channel public-webpage starter list is included. **自定义播放列表** accepts an HTTP(S) JSON URL; an empty URL restores the built-in list. Empty/invalid lists are rejected, downloads are bounded to 2 MiB, and stale source requests cannot overwrite a newer source.
+- **首次安装默认开启自动全屏播放。** 用户之后手动修改的选择会保存。
+- **后台播放**提供独立开关和**小窗 / HUD**方式选择，默认选择 HUD。
+- **小窗模式：**离开应用时，在主屏进入 Android 系统画中画，不将播放器移到 display 2，也不申请悬浮窗权限。需要 Android 8 及以上系统，且设备支持画中画。
+- **HUD 模式：**只有选择此模式时，离开应用才将实际播放器移到 display 2，返回应用后恢复到主屏。缺少副屏或权限时，不会改为占用仪表盘区域或在主屏显示悬浮窗。
+- HUD 权限检测会在需要时打开系统悬浮窗授权页面。部分车机 ROM 的权限查询结果与 WindowManager 实际授权不一致，因此保留透明的 1 × 1 像素窗口探测，探测后立即移除。应用不会自行授予系统权限。
+- 主屏设置页中的 **HUD 设置**提供预览窗体，支持拖动位置、保持视频比例缩放、滑条调节大小、保存、取消和恢复默认。配置保存在 `hud_window` 偏好设置中。
+- 默认 HUD 区域为 **728 × 190 物理像素**，起点为**屏幕坐标 `(0,720)`**。屏幕上方 720 行属于仪表盘区域，不在 HUD 范围内。16:9 视频的默认窗口为 **338 × 190**，对应 `[0,720][338,910]`。
+- HUD 窗口和全屏内容优先采用相同的实际视频比例，使 4:3、16:9 视频均按配置高度布局。返回主屏后，恢复用户选择的显示比例。
+- 已恢复上游关闭的应用模块和置空的播放列表，内置 30 个频道的公开网页初始列表。**自定义播放列表**支持 HTTP(S) JSON 地址，留空恢复内置列表。空列表和无效列表会被拒绝，下载大小限制为 2 MiB，旧播放源请求不会覆盖新播放源的数据。
 
-This retains the public source's webpage-adapter approach. Individual broadcasters may change their websites; the starter list and every broadcaster's current playback are not guaranteed. Proprietary 3.0.1 features such as its newer external-WebView loader and encrypted subscription format are not part of this source baseline.
+本项目沿用公开源码中的网页适配方式。各电视台可能调整网站，内置列表及所有频道的实时可播放性不作保证。闭源 3.0.1 中较新的外部 WebView 加载器、加密订阅格式等功能，不在这份源码基础中。
 
-## Build
+## 构建
 
-Use JDK 17 or 21, Android SDK platform 35 and Android build-tools. Tested build environment: JDK 21, Gradle 8.13, Android Gradle Plugin 8.10.0 and Kotlin 1.9.22. Set `JAVA_HOME` to a supported JDK. Configure your Android SDK with `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or an untracked `local.properties` containing `sdk.dir=/path/to/android-sdk`.
+需要 JDK 17 或 21、Android SDK 平台 35，以及 Android 构建工具。已验证的构建环境为 JDK 21、Gradle 8.13、Android Gradle Plugin 8.10.0 和 Kotlin 1.9.22。
+
+将 `JAVA_HOME` 指向受支持的 JDK。Android SDK 路径可通过 `ANDROID_HOME`、`ANDROID_SDK_ROOT` 配置，也可在不纳入 Git 的 `local.properties` 中填写 `sdk.dir=/path/to/android-sdk`。
 
 ```sh
 ./gradlew :app:assembleDebug
 ```
 
-Output: `app/build/outputs/apk/debug/app-debug.apk`.
+生成文件：`app/build/outputs/apk/debug/app-debug.apk`。
 
-The default debug build uses Android's local debug signing key. To use your own key, set these environment variables before building:
+默认 Debug 构建使用 Android 本机调试签名。如需使用自己的密钥，在构建前设置以下环境变量：
 
-| Variable | Meaning |
+| 环境变量 | 说明 |
 | --- | --- |
-| `WEBVIEWTV_HUD_KEYSTORE` | External keystore path |
-| `WEBVIEWTV_HUD_STORE_PASSWORD` | Keystore password |
-| `WEBVIEWTV_HUD_KEY_ALIAS` | Alias, default `hud` |
-| `WEBVIEWTV_HUD_KEY_PASSWORD` | Key password, defaults to the store password |
+| `WEBVIEWTV_HUD_KEYSTORE` | 外部密钥库文件路径 |
+| `WEBVIEWTV_HUD_STORE_PASSWORD` | 密钥库密码 |
+| `WEBVIEWTV_HUD_KEY_ALIAS` | 密钥别名，默认为 `hud` |
+| `WEBVIEWTV_HUD_KEY_PASSWORD` | 密钥密码，默认与密钥库密码相同 |
 
-Do not commit signing material or credentials. Updating an installed APK requires the same certificate. Default debug builds made on different machines may use different certificates. This source version keeps the HUD package name and preference keys; later proprietary application data and playlist formats are not generally interchangeable.
+不要将签名文件或凭据提交到仓库。覆盖安装已有应用需要使用相同的签名证书；不同电脑生成的默认调试签名可能不同。本源码版本保留 HUD 包名和偏好设置键，但后续闭源版本的应用数据、播放列表格式并不保证通用。
 
-Minimum SDK is 21; target SDK is 34. HUD behavior is designed around Android 9/11. The bundled Tencent X5 SDK retains the upstream public-source integration; Android 14+ kernel compatibility is not claimed.
+最低 SDK 为 21，目标 SDK 为 34。HUD 行为以 Android 9 / 11 为兼容基线。腾讯 X5 SDK 沿用上游公开源码的集成方式，不保证 Android 14 及以上系统的内核兼容性。
 
-## Verification
+## 测试与验证
 
 ```sh
 ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
@@ -57,14 +59,14 @@ node --test scripts/fullscreen.test.mjs
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Host regressions cover default fullscreen and background mode selection, HUD boundaries/aspect ratios, permission policy, safe playlist URLs, invalid/empty playlist parsing, and stale network responses/events. Android instrumentation covers actual preference persistence, editor gestures/save/cancel/reopen/reset, native dialog density, system PiP, and fullscreen entry/window restoration using a generated local test clip.
+本地回归测试覆盖默认全屏、后台方式选择、HUD 边界与宽高比、权限策略、播放列表地址校验、无效与空列表解析，以及过期网络响应和事件处理。Android 仪器测试覆盖实际偏好设置读写、编辑器手势、保存、取消、重新打开、恢复默认、原生弹窗密度、系统画中画，以及使用本地生成的测试视频进入全屏和恢复窗口。
 
-The display-2 window test creates two private virtual displays owned by the test app, verifies the HUD window/content bounds, and restores the same player without reloading the webpage. Run this suite on a fresh dedicated API-28 emulator: display ID 2 must not already be occupied or consumed by other display tests. The suite never releases another app's displays.
+Display 2 窗口测试会创建两个归测试应用所有的私有虚拟显示屏，检查 HUD 窗口和内容边界，并将同一播放器恢复到主屏，不重新加载网页。请在新启动的专用 API 28 模拟器上运行：display 2 不能已被占用，也不能已被其他显示测试分配使用。测试不会释放其他应用创建的显示屏。
 
-Video-pixel diagnostics can be enabled with the Android instrumentation argument `verifyVideoPixels=true`. On the current local emulator (system WebView 66), this diagnostic did **not** produce a valid video-frame capture; primary-screen capture was also black. No renderer-recreation or webpage-reload workaround is shipped on that evidence. Window geometry and UI tests must not be described as successful video-pixel verification.
+视频像素诊断需通过 Android 仪器测试参数 `verifyVideoPixels=true` 显式开启。在当前本地模拟器（系统 WebView 66）上，该诊断**未能取得有效的视频帧图像**，主屏采样也为黑帧。本版本没有基于这组采样引入重建播放视图或重新加载网页的改法。窗口几何和界面测试通过，不等于视频像素验证通过。
 
-The source build is independently validated; the previous APK modification's vehicle acceptance results must not be treated as acceptance of this rebuilt source version. OEM display behavior and vehicle standby/recovery still need vehicle testing. Do not run the instrumentation suite on an unattended vehicle.
+源码版本已单独进行构建验证，不能将此前 APK 修改版的实车验收结果视为本源码版本的验收结果。厂商显示行为、车辆待机与恢复仍需实车验证。不要在无人值守的实车上运行仪器测试套件。
 
-## Origin
+## 来源与致谢
 
-See [NOTICE](NOTICE) for source and dependency attribution. Original authorship and upstream declarations are retained. No original APK bytecode or native SDK binaries are vendored in the current source tree; third-party SDKs are resolved as declared Gradle dependencies. Signing secrets, service credentials, vehicle logs and vehicle screenshots are excluded.
+源码和依赖归属见 [NOTICE](NOTICE)。本项目保留原作者归属和上游声明。当前源码目录没有直接收录原始 APK 字节码或原生 SDK 二进制文件，第三方 SDK 通过 Gradle 声明的依赖获取。签名密钥、服务凭据、实车日志和实车截图均不纳入仓库。
