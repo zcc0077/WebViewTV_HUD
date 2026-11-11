@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+	<style name="FullscreenBaseTheme" parent="Theme.AppCompat.NoActionBar">
+		<item name="windowNoTitle">true</item>
+		<item name="android:windowFullscreen">true</item>
+		<item name="android:windowBackground">@drawable/splash</item>
+	</style>
+	<style name="FullscreenTheme" parent="FullscreenBaseTheme" />
+
+	<style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+		<item name="windowNoTitle">true</item>
+		<item name="android:windowFullscreen">false</item>
+		<item name="android:windowBackground">@drawable/splash</item>
+	</style>
+</resources>

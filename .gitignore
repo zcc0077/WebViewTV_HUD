@@ -8,3 +8,8 @@ __pycache__/
 *.jks
 *password*
 local.properties
+.gradle/
+**/build/
+.idea/
+*.iml
+captures/

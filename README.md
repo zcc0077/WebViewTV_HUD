@@ -1,78 +1,70 @@
 # WebViewTV HUD
 
-An APK-based modification of WebView TV 3.0.1 for a vehicle HUD on Android display 2.
+A source-based derivative of [hxh19950701/WebViewTvLive](https://github.com/hxh19950701/WebViewTvLive), with configurable background playback on an Android vehicle HUD.
 
-## What this repository contains
+This project builds directly from Kotlin/Java and Android resources with Gradle. It does not require an original APK, smali, a decompiler, a private signing key, or a vehicle connection.
 
-This is the **complete decoded APK project plus the Java source of the HUD extension**. It is not the manufacturer's original Kotlin/Gradle source project. The upstream repository's `3.0.1` tag contains a different, older application project, so this implementation was built from the actual 3.0.1 APK.
+## Source baseline
 
-The original application and packaged Java dependencies are included as editable smali. Resources, assets, and packaged third-party native libraries are included. Original C/C++ sources for those third-party `.so` files are not available in the APK. No original APK download is required to build this repository.
+The upstream author states that **1.6 is the final publicly available source version**. The upstream `3.0.1` release tag still contains that older source project; it is not the source of the closed-source 3.0.1 APK. This derivative intentionally uses the public source baseline and does not claim to reconstruct every later proprietary feature.
 
-| Directory | Contents |
-| --- | --- |
-| `apk/smali/` | Complete application and packaged dependency bytecode in smali form, including the modified entry points |
-| `apk/res/`, `apk/assets/` | Complete decoded resources and assets |
-| `apk/lib/`, `apk/unknown/` | Original packaged native libraries and additional runtime files |
-| `apk/AndroidManifest.xml`, `apk/apktool.yml` | Package configuration and APK rebuild metadata |
-| `src/com/vasthread/hudpatch/` | Editable Java source for HUD windows, settings, preview geometry and permission checks |
-| `tests/host/` | Geometry, boundary and permission-policy regressions |
-| `tests/android/` | Android instrumentation source used to exercise the actual editor views |
-| `scripts/` | Build and host-test commands |
+Upstream Git history is retained as a merge parent, based on `f84d817baf1b3f9407cbb525db9534842637090e`. The existing repository history is also retained. The earlier APK-based experiment remains available in commit `e72b00c`; the current default tree replaces it with the source-built application.
 
-## Features
+Current app version: `1.6-HUD.1` / code `45`. Package: `com.vasthread.webviewtv.v2.hud`. Launcher label: **WebView 电视 HUD**.
 
-- Independent package: `com.vasthread.webviewtv.v2.hud`.
-- Launcher name: **WebView 电视 HUD**.
-- Automatic fullscreen playback and background HUD playback enabled by default. Explicit existing preferences remain respected.
-- Background playback uses a display-2 overlay. Returning to the app restores the player to the primary display.
-- Default HUD bounds: `(0,720)` to `(338,910)` for 16:9 video. Height is 190 physical pixels. The area above Y=720 is excluded.
-- Main settings includes **HUD 设置**: drag the preview to move, drag its lower-right handle or use the size slider to resize, save/cancel/reset.
-- Aspect ratio is preserved. Placement is constrained to the 728x190 HUD canvas. Editor Y is relative to the HUD origin; actual screen Y is `720 + editorY`.
-- Settings are persisted in the app's `hud_window` preferences. They take effect the next time the player moves to the secondary display.
-- Missing overlay authorization opens Android's system permission screen, once per process. On the tested vehicle ROM, framework permission queries can report denial even after the system switch is enabled. An invisible, noninteractive 1x1 HUD-area overlay is then added and immediately removed to let WindowManager validate authorization. No system permission or configuration is changed by this check.
+## Playback and settings
+
+- **Automatic fullscreen playback is enabled on first installation.** Explicit user changes are persisted.
+- **Background playback** has an enable switch and a **small window / HUD** mode selector. The default mode is HUD.
+- **Small window:** leaving the app requests Android picture-in-picture on the main display. It does not move the player to display 2 or request overlay permission. Android 8+ and device PiP support are required.
+- **HUD:** only this selected mode moves the actual player to display 2 when leaving the app. Returning to the app restores it to the primary screen. Missing display/permission does not fall back to the instrument area or a primary-display overlay.
+- HUD permission detection opens Android's overlay authorization screen when needed. A transparent, immediately removed 1x1 probe handles vehicle ROMs whose permission queries disagree with WindowManager. No system permission is granted by the app.
+- **HUD 设置** in the main settings page opens a preview with dragging, aspect-locked resizing, a size slider, save, cancel and reset. Values persist in `hud_window` preferences.
+- Default HUD canvas: **728x190 physical pixels**, starting at **screen `(0,720)`**. The first 720 screen rows belong to the instrument cluster and are excluded. Default 16:9 playback is **338x190**, at `[0,720][338,910]`.
+- HUD window and fullscreen content prefer the same actual video ratio, preserving the full configured height for 4:3 as well as 16:9 material. Returning to the main screen restores the selected display ratio.
+- The public source's disabled app module and empty playlist have been restored. A 30-channel public-webpage starter list is included. **自定义播放列表** accepts an HTTP(S) JSON URL; an empty URL restores the built-in list. Empty/invalid lists are rejected, downloads are bounded to 2 MiB, and stale source requests cannot overwrite a newer source.
+
+This retains the public source's webpage-adapter approach. Individual broadcasters may change their websites; the starter list and every broadcaster's current playback are not guaranteed. Proprietary 3.0.1 features such as its newer external-WebView loader and encrypted subscription format are not part of this source baseline.
 
 ## Build
 
-Tested tools: Python 3.12, JDK 21, Apktool 2.12.1, Android SDK platform 28 and build-tools 36.1.0. The scripts support macOS/Linux. Set `JAVA_HOME` to your JDK (the scripts use its `bin/java` and `bin/javac`), or put both Java tools on PATH. On macOS, common Homebrew and Android Studio JDK locations are also detected. `apktool` must be on PATH. Set `ANDROID_SDK_ROOT`, `ANDROID_HOME`, or pass `--sdk`.
-
-Build a zip-aligned unsigned APK:
+Use JDK 17 or 21, Android SDK platform 35 and Android build-tools. Tested build environment: JDK 21, Gradle 8.13, Android Gradle Plugin 8.10.0 and Kotlin 1.9.22. Set `JAVA_HOME` to a supported JDK. Configure your Android SDK with `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or an untracked `local.properties` containing `sdk.dir=/path/to/android-sdk`.
 
 ```sh
-python3 scripts/build.py --sdk /path/to/android-sdk
+./gradlew :app:assembleDebug
 ```
 
-Output: `out/WebViewTV-HUD-unsigned.apk`. Sign it before installing. To build and sign in one command:
+Output: `app/build/outputs/apk/debug/app-debug.apk`.
+
+The default debug build uses Android's local debug signing key. To use your own key, set these environment variables before building:
+
+| Variable | Meaning |
+| --- | --- |
+| `WEBVIEWTV_HUD_KEYSTORE` | External keystore path |
+| `WEBVIEWTV_HUD_STORE_PASSWORD` | Keystore password |
+| `WEBVIEWTV_HUD_KEY_ALIAS` | Alias, default `hud` |
+| `WEBVIEWTV_HUD_KEY_PASSWORD` | Key password, defaults to the store password |
+
+Do not commit signing material or credentials. Updating an installed APK requires the same certificate. Default debug builds made on different machines may use different certificates. This source version keeps the HUD package name and preference keys; later proprietary application data and playlist formats are not generally interchangeable.
+
+Minimum SDK is 21; target SDK is 34. HUD behavior is designed around Android 9/11. The bundled Tencent X5 SDK retains the upstream public-source integration; Android 14+ kernel compatibility is not claimed.
+
+## Verification
 
 ```sh
-python3 scripts/build.py \
-  --sdk /path/to/android-sdk \
-  --keystore /private/path/signing.keystore \
-  --alias hud \
-  --ks-pass-file /private/path/store-password
+./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+node --test scripts/fullscreen.test.mjs
+./gradlew :app:connectedDebugAndroidTest
 ```
 
-The password file must contain the keystore password on its first line. Use `--key-pass-file` only if the private-key password differs. Keys, password files and output APKs are intentionally excluded from Git. To update an existing installation, use the same signing key that signed that installation; changing the key prevents an in-place update.
+Host regressions cover default fullscreen and background mode selection, HUD boundaries/aspect ratios, permission policy, safe playlist URLs, invalid/empty playlist parsing, and stale network responses/events. Android instrumentation covers actual preference persistence, editor gestures/save/cancel/reopen/reset, native dialog density, system PiP, and fullscreen entry/window restoration using a generated local test clip.
 
-The source supports rebuilding the same functionality. The verified rebuild reproduced both DEX files, the binary manifest and resource table byte for byte from the reference deployment below. A freshly rebuilt and signed APK can have a different overall binary hash due to ZIP metadata, tooling and signing choices.
+The display-2 window test creates two private virtual displays owned by the test app, verifies the HUD window/content bounds, and restores the same player without reloading the webpage. Run this suite on a fresh dedicated API-28 emulator: display ID 2 must not already be occupied or consumed by other display tests. The suite never releases another app's displays.
 
-## Tests and verification
+Video-pixel diagnostics can be enabled with the Android instrumentation argument `verifyVideoPixels=true`. On the current local emulator (system WebView 66), this diagnostic did **not** produce a valid video-frame capture; primary-screen capture was also black. No renderer-recreation or webpage-reload workaround is shipped on that evidence. Window geometry and UI tests must not be described as successful video-pixel verification.
 
-```sh
-python3 scripts/test.py
-```
+The source build is independently validated; the previous APK modification's vehicle acceptance results must not be treated as acceptance of this rebuilt source version. OEM display behavior and vehicle standby/recovery still need vehicle testing. Do not run the instrumentation suite on an unattended vehicle.
 
-Host tests cover defaults, aspect ratios, movement bounds, extreme inputs and permission policy. The Android instrumentation source exercises the actual settings entry, handle resize, dragging, save/reopen, cancel and default reset; a separately built test APK must share the target APK's signing certificate. It is intended for an emulator, not an unattended vehicle.
+## Origin
 
-The shipped version was verified on Android 9: playback appeared on display 2; returning to the app restored fullscreen; leaving again restored the HUD window. On a real vehicle, moving/resizing to editor `(120,40)`, size `178x100`, produced WindowManager bounds `[120,760][298,860]`. Saving and reopening retained the values. Resetting restored `[0,720][338,910]`. UI and geometry tests also passed on an API-28 emulator. Other ROMs, playback engines and long standby cycles have not been exhaustively validated.
-
-Reference deployment: version name `3.0.1`, version code `44`; signed APK SHA-256:
-
-```text
-8f972e637df6b9acf269bdab3f9451f2dda9c84e34b002a46a8fc6491a5f7a1a
-```
-
-The decoded baseline came from a 3.0.1 APK with SHA-256 `eea0b0ea618bf5ebbe0437a9787a8915dfdc3d7eeeae5ddfb1e6f425af5f0b32`.
-
-## Origin and third-party code
-
-Original project: [hxh19950701/WebViewTvLive](https://github.com/hxh19950701/WebViewTvLive). Original resources, obfuscated application bytecode and bundled SDK/native components retain their original ownership and applicable terms. This repository does not claim authorship of those components or invent a license grant for them. Device logs, vehicle screenshots, signing private keys and service credentials are not included.
+See [NOTICE](NOTICE) for source and dependency attribution. Original authorship and upstream declarations are retained. No original APK bytecode or native SDK binaries are vendored in the current source tree; third-party SDKs are resolved as declared Gradle dependencies. Signing secrets, service credentials, vehicle logs and vehicle screenshots are excluded.

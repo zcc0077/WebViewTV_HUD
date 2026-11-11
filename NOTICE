@@ -1,0 +1,21 @@
+WebViewTV HUD derives from the publicly available source of:
+  https://github.com/hxh19950701/WebViewTvLive
+  Original author: hxh19950701 and the upstream contributors.
+  Imported upstream main: f84d817baf1b3f9407cbb525db9534842637090e.
+
+The upstream README identifies 1.6 as its final public source version and
+provides its own usage declarations. The upstream tree did not supply a
+LICENSE file at the imported revision. This repository preserves original
+ownership and declarations and does not represent a new license grant for
+upstream code or third-party SDKs. Consult the upstream author's declarations:
+  https://github.com/hxh19950701/WebViewTvLive/blob/f84d817baf1b3f9407cbb525db9534842637090e/README_CN.md
+
+The built-in starter playlist was restored from the upstream public asset at
+commit 36fda1ad0081aef097d2f00bc43ea076fbb6a5a9:
+  app/src/main/assets/default_playlist.json
+It contains links to public broadcaster webpages, not hosted video streams.
+
+HUD integration, editor, playback-mode selection and the source-build
+restoration were added for this derivative. Original third-party SDK and
+library terms continue to apply to dependencies obtained through Gradle.
+The color-pattern video under androidTest/assets is generated test data.
