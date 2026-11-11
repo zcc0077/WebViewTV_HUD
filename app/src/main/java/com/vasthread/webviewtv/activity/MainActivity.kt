@@ -231,7 +231,7 @@ class MainActivity : AppCompatActivity(), HudSettings.VideoInfoProvider {
     }
 
     override fun onDestroy() {
-        HudOverlay.restore(this)
+        HudOverlay.release(this)
         playerView.release()
         PlaylistManager.onPlaylistChange = null
         PlaylistManager.onUpdatePlaylistJobStateChange = null

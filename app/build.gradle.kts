@@ -11,8 +11,8 @@ android {
         applicationId = "com.vasthread.webviewtv.v2.hud"
         minSdk = 21
         targetSdk = 34
-        versionCode = 45
-        versionName = "1.6-HUD.1"
+        versionCode = 46
+        versionName = "1.6-HUD.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

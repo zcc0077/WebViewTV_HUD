@@ -1,13 +1,12 @@
 package com.vasthread.hudpatch;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.AppOpsManager;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
 import android.provider.Settings;
@@ -23,6 +22,7 @@ import android.widget.Toast;
 public final class HudOverlay {
   private static final String TAG = "WebViewTvHud";
   private static boolean permissionPrompted;
+  private static AlertDialog permissionExplanation;
   private static Activity owner;
   private static View player;
   private static ViewGroup originalParent;
@@ -35,11 +35,11 @@ public final class HudOverlay {
   }
 
   private static boolean permissionAllowed(Activity activity) {
-    if (Build.VERSION.SDK_INT < 23) return true;
-    boolean frameworkAllowed = false;
+    boolean frameworkAllowed = Build.VERSION.SDK_INT < 23;
     int appOpMode = -1;
+    int effectiveMode = -1;
     try {
-      frameworkAllowed = Settings.canDrawOverlays(activity);
+      if (Build.VERSION.SDK_INT >= 23) frameworkAllowed = Settings.canDrawOverlays(activity);
     } catch (RuntimeException e) {
       Log.w(TAG, "framework overlay check failed", e);
     }
@@ -54,14 +54,26 @@ public final class HudOverlay {
     } catch (RuntimeException e) {
       Log.w(TAG, "app-op overlay check failed", e);
     }
-    boolean allowed = OverlayPermissionPolicy.allowed(frameworkAllowed, appOpMode);
-    if (!allowed) allowed = probeWindowPermission(activity);
+    try {
+      AppOpsManager ops = (AppOpsManager) activity.getSystemService(Context.APP_OPS_SERVICE);
+      if (ops != null)
+        effectiveMode =
+            ops.noteOpNoThrow(
+                AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW,
+                Process.myUid(),
+                activity.getPackageName());
+    } catch (RuntimeException e) {
+      Log.w(TAG, "effective overlay app-op unavailable", e);
+    }
+    boolean allowed = OverlayPermissionPolicy.allowed(frameworkAllowed, appOpMode, effectiveMode);
     Log.i(
         TAG,
         "permission-check framework="
             + frameworkAllowed
             + " appOp="
             + appOpMode
+            + " noteOp="
+            + effectiveMode
             + " uid="
             + Process.myUid()
             + " package="
@@ -71,67 +83,35 @@ public final class HudOverlay {
     return allowed;
   }
 
-  private static boolean probeWindowPermission(Activity activity) {
-    DisplayManager dm = (DisplayManager) activity.getSystemService(Context.DISPLAY_SERVICE);
-    Display display = dm == null ? null : dm.getDisplay(2);
-    if (display == null) return false;
-    Point size = new Point();
-    display.getRealSize(size);
-    if (size.y < HudGeometry.top() + HudGeometry.height()) return false;
-    Context context = activity.createDisplayContext(display);
-    WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-    if (wm == null) return false;
-    View probe = new View(context);
-    int type =
-        Build.VERSION.SDK_INT >= 26
-            ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            : WindowManager.LayoutParams.TYPE_PHONE;
-    WindowManager.LayoutParams lp =
-        new WindowManager.LayoutParams(
-            1,
-            1,
-            type,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT);
-    lp.gravity = Gravity.TOP | Gravity.LEFT;
-    lp.x = 0;
-    lp.y = HudGeometry.top();
-    lp.alpha = 0f;
-    boolean added = false;
-    try {
-      wm.addView(probe, lp);
-      added = true;
-      Log.i(TAG, "overlay-probe accepted display=2 x=0 y=720 size=1x1 alpha=0");
-      return true;
-    } catch (RuntimeException e) {
-      Log.w(TAG, "overlay-probe rejected", e);
-      return false;
-    } finally {
-      if (added)
-        try {
-          wm.removeViewImmediate(probe);
-        } catch (RuntimeException e) {
-          Log.e(TAG, "overlay-probe cleanup failed", e);
-        }
+  public static void ensurePermission(Activity activity) {
+    if (permissionAllowed(activity)) {
+      permissionPrompted = false;
+      return;
     }
+    promptPermission(activity);
   }
 
-  public static void ensurePermission(Activity activity) {
-    if (permissionAllowed(activity) || permissionPrompted) return;
+  private static void promptPermission(Activity activity) {
+    if (permissionPrompted || activity.isFinishing() || activity.isDestroyed()) return;
     permissionPrompted = true;
     Toast.makeText(activity, "请允许悬浮窗权限，以便在 HUD 显示视频", Toast.LENGTH_LONG).show();
-    try {
-      activity.startActivity(
-          new Intent(
-                  Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                  Uri.parse("package:" + activity.getPackageName()))
-              .addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION));
-    } catch (RuntimeException e) {
-      Log.e(TAG, "overlay permission screen unavailable", e);
-    }
+    if (OverlayPermissionPrompt.openSettings(activity)) return;
+    permissionExplanation =
+        new AlertDialog.Builder(activity)
+            .setTitle("需要悬浮窗权限")
+            .setMessage(
+                "HUD 尚未获得悬浮窗权限，或系统无法确认授权。\n\n"
+                    + "这台设备没有可用的系统授权页面，请在车机应用权限管理中，允许“WebView 电视 HUD”显示悬浮窗。"
+                    + "授权后返回应用会重新检测；也可以在设置中选择后台小窗播放。")
+            .setPositiveButton("知道了", null)
+            .show();
+  }
+
+  public static void release(Activity activity) {
+    restore(activity);
+    if (permissionExplanation != null) permissionExplanation.dismiss();
+    permissionExplanation = null;
+    permissionPrompted = false;
   }
 
   public static void show(Activity activity, View candidate, Rational ratio, Point videoSize) {
@@ -166,9 +146,10 @@ public final class HudOverlay {
       return;
     }
     if (!permissionAllowed(activity)) {
-      ensurePermission(activity);
+      promptPermission(activity);
       return;
     }
+    permissionPrompted = false;
     if (candidate == null || !(candidate.getParent() instanceof ViewGroup)) {
       Log.e(TAG, "player view unavailable");
       return;
